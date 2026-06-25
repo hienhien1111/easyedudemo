@@ -1,0 +1,160 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Profile Card ─────────────────────────────────────────────────────── */
+.profileCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.profileAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-primary-400);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profileInfo {
+  flex: 1;
+}
+
+.profileName {
+  font-size: 1.143rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.profileEmail {
+  font-size: 0.893rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.profileMeta {
+  display: flex;
+  align-items: center;
+  font-size: 0.857rem;
+  color: var(--color-text-muted);
+}
+
+/* ─── Section ─────────────────────────────────────────────────────────── */
+.section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.section h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.emptyState {
+  margin-top: 20px;
+  padding: 32px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.893rem;
+  background: var(--color-gray-50);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-border);
+}
+
+/* ─── Admin info ──────────────────────────────────────────────────────── */
+.adminInfo {
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-200);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+}
+
+.adminInfo h3 {
+  font-size: 0.929rem;
+  font-weight: 600;
+  color: var(--color-primary-600);
+  margin-bottom: 6px;
+}
+
+.adminInfo p {
+  font-size: 0.893rem;
+  color: var(--color-primary-700);
+}
+
+/* ─── Info Grid ────────────────────────────────────────────────────────── */
+.infoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoRow:hover {
+  background: var(--color-gray-50);
+}
+
+.infoLabel {
+  width: 120px;
+  font-size: 0.857rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.infoValue {
+  font-size: 0.893rem;
+  color: var(--color-text-primary);
+}

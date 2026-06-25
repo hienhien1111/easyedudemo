@@ -1,0 +1,195 @@
+.page {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ─── Left panel ─────────────────────────────────────────────────────────── */
+.left {
+  flex: 1;
+  background: linear-gradient(145deg, #2f6aaa 0%, #5B9BD5 60%, #7ab5dc 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 56px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.left::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  pointer-events: none;
+}
+
+.left::after {
+  content: '';
+  position: absolute;
+  bottom: -60px;
+  left: -60px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  pointer-events: none;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 56px;
+}
+
+.brandMark {
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 6px;
+  position: relative;
+}
+
+.brandMark::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  background: var(--color-primary-500);
+  border-radius: 2px;
+}
+
+.brandName {
+  font-size: 1.286rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.tagline h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 16px;
+}
+
+.tagline p {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.6;
+}
+
+.features {
+  margin-top: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.929rem;
+  color: rgba(255,255,255,0.85);
+}
+
+.featureDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.6);
+  flex-shrink: 0;
+}
+
+/* ─── Right panel ─────────────────────────────────────────────────────────── */
+.right {
+  width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  background: var(--color-bg);
+}
+
+.formCard {
+  width: 100%;
+  max-width: 380px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  box-shadow: var(--shadow-md);
+}
+
+.formHeader {
+  margin-bottom: 28px;
+}
+
+.formHeader h2 {
+  font-size: 1.429rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.formHeader p {
+  font-size: 0.893rem;
+  color: var(--color-text-secondary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Demo section ─────────────────────────────────────────────────────────── */
+.demoSection {
+  text-align: center;
+}
+
+.demoLabel {
+  font-size: 0.786rem;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.demoButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .page {
+    flex-direction: column;
+  }
+
+  .left {
+    padding: 32px 24px;
+    flex: none;
+  }
+
+  .tagline h1 {
+    font-size: 1.5rem;
+  }
+
+  .right {
+    width: 100%;
+    padding: 24px 16px;
+  }
+
+  .formCard {
+    max-width: 100%;
+  }
+}

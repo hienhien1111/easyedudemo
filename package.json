@@ -1,0 +1,26 @@
+{
+  "name": "eedemo",
+  "version": "1.0.0",
+  "description": "Learning Center Management System - Monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "db:migrate": "npm run prisma:migrate --workspace=apps/backend",
+    "db:seed": "npm run prisma:seed --workspace=apps/backend",
+    "db:studio": "npm run prisma:studio --workspace=apps/backend"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

@@ -1,0 +1,8 @@
+node_modules/
+.env
+dist/
+.next/
+*.log
+.DS_Store
+coverage/
+prisma/migrations/*.sql.bak
