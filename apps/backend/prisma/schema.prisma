@@ -18,25 +18,91 @@ enum Role {
   STUDENT
 }
 
+enum EnrollmentStatus {
+  ACTIVE
+  INACTIVE
+  DROPPED
+}
+
+enum DayOfWeek {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT           // có mặt
+  ABSENT_EXCUSED    // vắng có phép
+  ABSENT_UNEXCUSED  // vắng không phép
+}
+
+enum InvoiceStatus {
+  DRAFT      // đang tạo, chưa gửi
+  SENT       // đã gửi cho học sinh, chờ thanh toán
+  PAID       // đã thanh toán thành công (qua MoMo)
+  CANCELLED
+}
+
+enum SalaryStatus {
+  PENDING    // đang tính / chờ thanh toán
+  PAID       // admin đã xác nhận đã chuyển khoản
+  CANCELLED
+}
+
 // ─── Models ─────────────────────────────────────────────────────────────────
 
+// ─── User ───────────────────────────────────────────────────────────────────
+
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  role         Role     @default(STUDENT)
-  fullName     String   @map("full_name")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String  @map("password_hash")
+  role         Role    @default(STUDENT)
+  fullName     String  @map("full_name")
+  phone        String?
+  isActive     Boolean @default(true) @map("is_active")
+
+  // Thông tin ngân hàng — chỉ dùng cho TEACHER
+  bankName        String? @map("bank_name")
+  bankAccountNo   String? @map("bank_account_no")
+  bankAccountName String? @map("bank_account_name")
+
+  // Tỉ lệ hoa hồng mặc định — chỉ dùng cho TEACHER
+  // Ví dụ: 0.3000 = 30% tổng doanh thu học phí các lớp GV đứng
+  // Giá trị này là DEFAULT, sẽ được sao chép sang TeacherSalaryInvoice khi tạo
+  // Admin có thể điều chỉnh riêng trên từng kỳ lương trước khi thanh toán
+  commissionRate Decimal? @map("commission_rate") @db.Decimal(5, 4)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  refreshTokens RefreshToken[]
-  taughtClasses Class[]        @relation("ClassTeacher")
-  enrollments   Enrollment[]
+  refreshTokens          RefreshToken[]
+  taughtClasses          Class[]                @relation("ClassTeacher")
+  enrollments            Enrollment[]
+  attendanceRecords      AttendanceRecord[]     @relation("StudentAttendance")
+  markedAttendances      AttendanceRecord[]     @relation("AttendanceMarker")
+  studentInvoices        StudentInvoice[]       @relation("StudentInvoices")
+  createdStudentInvoices StudentInvoice[]       @relation("InvoiceCreator")
+  teacherSalaries        TeacherSalaryInvoice[] @relation("TeacherSalaries")
+  createdSalaries        TeacherSalaryInvoice[] @relation("SalaryCreator")
+  confirmedSalaries      TeacherSalaryInvoice[] @relation("SalaryConfirmer")
 
   @@map("users")
 }
+
+// ─── RefreshToken ────────────────────────────────────────────────────────────
 
 model RefreshToken {
   id        String   @id @default(cuid())
@@ -46,13 +112,14 @@ model RefreshToken {
   isRevoked Boolean  @default(false) @map("is_revoked")
   createdAt DateTime @default(now()) @map("created_at")
 
-  // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([tokenHash])
   @@map("refresh_tokens")
 }
+
+// ─── Center ──────────────────────────────────────────────────────────────────
 
 model Center {
   id        String   @id @default(cuid())
@@ -63,41 +130,52 @@ model Center {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Relations
   classes Class[]
 
   @@map("centers")
 }
 
+// ─── Class ───────────────────────────────────────────────────────────────────
+
 model Class {
-  id        String   @id @default(cuid())
-  name      String
-  centerId  String   @map("center_id")
-  teacherId String   @map("teacher_id")
-  isActive  Boolean  @default(true) @map("is_active")
-  startDate DateTime? @map("start_date")
-  endDate   DateTime? @map("end_date")
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  centerId    String    @map("center_id")
+  teacherId   String    @map("teacher_id")
+  isActive    Boolean   @default(true) @map("is_active")
+  startDate   DateTime? @db.Date @map("start_date")
+  endDate     DateTime? @db.Date @map("end_date")
+
+  // Giá học phí mỗi buổi — dùng để tính StudentInvoiceLineItem
+  pricePerSession Decimal @default(0) @map("price_per_session") @db.Decimal(12, 2)
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  center      Center       @relation(fields: [centerId], references: [id])
-  teacher     User         @relation("ClassTeacher", fields: [teacherId], references: [id])
-  enrollments Enrollment[]
+  center                  Center                   @relation(fields: [centerId], references: [id])
+  teacher                 User                     @relation("ClassTeacher", fields: [teacherId], references: [id])
+  enrollments             Enrollment[]
+  scheduleTemplates       WeeklyScheduleTemplate[]
+  sessions                ClassSession[]
+  studentInvoiceLineItems StudentInvoiceLineItem[]
+  salaryLineItems         SalaryLineItem[]
 
   @@index([centerId])
   @@index([teacherId])
   @@map("classes")
 }
 
-model Enrollment {
-  id         String   @id @default(cuid())
-  studentId  String   @map("student_id")
-  classId    String   @map("class_id")
-  enrolledAt DateTime @default(now()) @map("enrolled_at")
-  status     String   @default("ACTIVE")
+// ─── Enrollment ──────────────────────────────────────────────────────────────
 
-  // Relations
+model Enrollment {
+  id         String           @id @default(cuid())
+  studentId  String           @map("student_id")
+  classId    String           @map("class_id")
+  enrolledAt DateTime         @default(now()) @map("enrolled_at")
+  status     EnrollmentStatus @default(ACTIVE)
+
   student User  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
 
@@ -105,4 +183,220 @@ model Enrollment {
   @@index([studentId])
   @@index([classId])
   @@map("enrollments")
+}
+
+// ─── WeeklyScheduleTemplate ──────────────────────────────────────────────────
+// Mẫu thời khoá biểu lặp hàng tuần cho từng lớp.
+// Admin tạo template → hệ thống generate ClassSession cho N tuần tới.
+// Khi template bị deactivate/sửa, các session tương lai có thể tái tạo.
+
+model WeeklyScheduleTemplate {
+  id            String    @id @default(cuid())
+  classId       String    @map("class_id")
+  dayOfWeek     DayOfWeek @map("day_of_week")
+  startTime     String    @map("start_time") // "07:30"
+  endTime       String    @map("end_time")   // "09:00"
+  room          String?
+  isActive      Boolean   @default(true) @map("is_active")
+  // Cho phép thay đổi lịch giữa kỳ mà không xoá session cũ
+  effectiveFrom DateTime  @db.Date @map("effective_from")
+  effectiveTo   DateTime? @db.Date @map("effective_to")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  class    Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  sessions ClassSession[]
+
+  @@index([classId])
+  @@map("weekly_schedule_templates")
+}
+
+// ─── ClassSession ─────────────────────────────────────────────────────────────
+// Buổi học cụ thể. Được generate từ WeeklyScheduleTemplate hoặc tạo thủ công.
+
+model ClassSession {
+  id         String        @id @default(cuid())
+  classId    String        @map("class_id")
+  templateId String?       @map("template_id") // null nếu tạo thủ công
+  date       DateTime      @db.Date
+  startTime  String        @map("start_time")  // "07:30"
+  endTime    String        @map("end_time")
+  room       String?
+  notes      String?
+  status     SessionStatus @default(SCHEDULED)
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  class             Class                   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  template          WeeklyScheduleTemplate? @relation(fields: [templateId], references: [id])
+  attendanceRecords AttendanceRecord[]
+
+  @@unique([classId, date, startTime]) // tránh tạo duplicate session
+  @@index([classId])
+  @@index([date])
+  @@map("class_sessions")
+}
+
+// ─── AttendanceRecord ─────────────────────────────────────────────────────────
+// Điểm danh từng học sinh cho mỗi buổi học.
+// Teacher điểm danh realtime khi đến giờ học theo thời khoá biểu.
+
+model AttendanceRecord {
+  id        String           @id @default(cuid())
+  sessionId String           @map("session_id")
+  studentId String           @map("student_id")
+  status    AttendanceStatus
+  markedBy  String           @map("marked_by") // userId của teacher hoặc admin
+  markedAt  DateTime         @default(now()) @map("marked_at")
+  notes     String?
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  session ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student User         @relation("StudentAttendance", fields: [studentId], references: [id], onDelete: Cascade)
+  marker  User         @relation("AttendanceMarker", fields: [markedBy], references: [id])
+
+  @@unique([sessionId, studentId]) // mỗi học sinh chỉ có 1 record mỗi buổi
+  @@index([sessionId])
+  @@index([studentId])
+  @@map("attendance_records")
+}
+
+// ─── StudentInvoice ───────────────────────────────────────────────────────────
+// Hoá đơn học phí theo kỳ của một học sinh.
+// 1 hoá đơn/kỳ/học sinh, gộp TẤT CẢ lớp học sinh tham gia thành line items.
+//
+// Công thức:
+//   lineAmount (mỗi lớp) = (presentCount + absentUnexcusedCount) × pricePerSession
+//   totalAmount           = SUM(tất cả lineAmount)
+
+model StudentInvoice {
+  id          String        @id @default(cuid())
+  studentId   String        @map("student_id")
+  periodStart DateTime      @db.Date @map("period_start")
+  periodEnd   DateTime      @db.Date @map("period_end")
+  totalAmount Decimal       @default(0) @map("total_amount") @db.Decimal(12, 2)
+  status      InvoiceStatus @default(DRAFT)
+  sentAt      DateTime?     @map("sent_at")
+  paidAt      DateTime?     @map("paid_at")
+
+  // MoMo payment — luồng: Gửi → tạo MoMo order → QR → webhook → PAID
+  momoOrderId       String? @unique @map("momo_order_id")
+  momoTransactionId String? @map("momo_transaction_id")
+  momoPayUrl        String? @map("momo_pay_url")    // URL QR code để học sinh quét
+  momoRawStatus     String? @map("momo_raw_status") // raw response từ MoMo webhook
+
+  createdBy String   @map("created_by") // adminId
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  student   User                     @relation("StudentInvoices", fields: [studentId], references: [id])
+  creator   User                     @relation("InvoiceCreator", fields: [createdBy], references: [id])
+  lineItems StudentInvoiceLineItem[]
+
+  @@index([studentId])
+  @@index([status])
+  @@index([periodStart, periodEnd])
+  @@map("student_invoices")
+}
+
+// Line item cho từng lớp trong StudentInvoice.
+// Tất cả giá trị là snapshot tại thời điểm chốt hoá đơn.
+
+model StudentInvoiceLineItem {
+  id                   String  @id @default(cuid())
+  invoiceId            String  @map("invoice_id")
+  classId              String  @map("class_id")
+  // Snapshot tại thời điểm chốt
+  className            String  @map("class_name")
+  pricePerSession      Decimal @map("price_per_session") @db.Decimal(12, 2)
+  presentCount         Int     @default(0) @map("present_count")
+  absentExcusedCount   Int     @default(0) @map("absent_excused_count")
+  absentUnexcusedCount Int     @default(0) @map("absent_unexcused_count")
+  // lineAmount = (presentCount + absentUnexcusedCount) × pricePerSession
+  lineAmount           Decimal @map("line_amount") @db.Decimal(12, 2)
+
+  invoice StudentInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  class   Class          @relation(fields: [classId], references: [id])
+
+  @@unique([invoiceId, classId])
+  @@index([invoiceId])
+  @@index([classId])
+  @@map("student_invoice_line_items")
+}
+
+// ─── TeacherSalaryInvoice ─────────────────────────────────────────────────────
+// Hoá đơn lương theo kỳ của một giáo viên.
+//
+// Công thức:
+//   studentRevenueForClass (mỗi lớp) = SUM(StudentInvoiceLineItem.lineAmount)
+//     trong kỳ, lọc invoice status IN (SENT, PAID)
+//   totalStudentRevenue = SUM(studentRevenueForClass của tất cả lớp GV đứng)
+//   calculatedAmount    = totalStudentRevenue × commissionRate
+//
+// Commission rate:
+//   - Default = User.commissionRate tại thời điểm tạo salary invoice
+//   - Admin có thể PATCH commissionRate trước khi chốt → tự tính lại calculatedAmount
+//   - Bị lock khi status = PAID
+
+model TeacherSalaryInvoice {
+  id          String       @id @default(cuid())
+  teacherId   String       @map("teacher_id")
+  periodStart DateTime     @db.Date @map("period_start")
+  periodEnd   DateTime     @db.Date @map("period_end")
+
+  // Tỉ lệ hoa hồng áp dụng cho kỳ này (adjustable trước khi PAID)
+  commissionRate Decimal @map("commission_rate") @db.Decimal(5, 4) // VD: 0.3000
+
+  // Tổng doanh thu học phí từ tất cả lớp GV đứng trong kỳ (invoice SENT + PAID)
+  totalStudentRevenue Decimal @default(0) @map("total_student_revenue") @db.Decimal(12, 2)
+  // calculatedAmount = totalStudentRevenue × commissionRate
+  calculatedAmount    Decimal @default(0) @map("calculated_amount") @db.Decimal(12, 2)
+
+  status      SalaryStatus @default(PENDING)
+  paidAt      DateTime?    @map("paid_at")
+  confirmedBy String?      @map("confirmed_by") // adminId xác nhận đã chuyển khoản
+  confirmedAt DateTime?    @map("confirmed_at")
+
+  // Snapshot thông tin ngân hàng tại thời điểm tạo salary invoice
+  bankName        String? @map("bank_name")
+  bankAccountNo   String? @map("bank_account_no")
+  bankAccountName String? @map("bank_account_name")
+
+  notes     String?
+  createdBy String   @map("created_by") // adminId
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  teacher   User            @relation("TeacherSalaries", fields: [teacherId], references: [id])
+  creator   User            @relation("SalaryCreator", fields: [createdBy], references: [id])
+  confirmer User?           @relation("SalaryConfirmer", fields: [confirmedBy], references: [id])
+  lineItems SalaryLineItem[]
+
+  @@index([teacherId])
+  @@index([status])
+  @@map("teacher_salary_invoices")
+}
+
+// Breakdown doanh thu theo từng lớp trong kỳ lương.
+// Giúp admin xem chi tiết từng lớp đóng góp bao nhiêu vào lương GV.
+
+model SalaryLineItem {
+  id              String  @id @default(cuid())
+  salaryInvoiceId String  @map("salary_invoice_id")
+  classId         String  @map("class_id")
+  // Snapshot tại thời điểm tạo
+  className              String  @map("class_name")
+  sessionCount           Int     @map("session_count")            // số buổi dạy lớp này trong kỳ
+  studentRevenueForClass Decimal @map("student_revenue_for_class") @db.Decimal(12, 2)
+  // lineAmount = studentRevenueForClass × commissionRate (lấy từ invoice cha)
+  lineAmount             Decimal @map("line_amount") @db.Decimal(12, 2)
+
+  salaryInvoice TeacherSalaryInvoice @relation(fields: [salaryInvoiceId], references: [id], onDelete: Cascade)
+  class         Class                @relation(fields: [classId], references: [id])
+
+  @@unique([salaryInvoiceId, classId])
+  @@index([salaryInvoiceId])
+  @@map("salary_line_items")
 }
