@@ -4,6 +4,7 @@
 #   - Không mount source code volume
 #   - Build production stage của Dockerfile
 #   - Đọc .env.production thay vì .env
+#   - Backend/frontend KHÔNG expose port ra host (chỉ qua nginx)
 
 services:
   postgres:
@@ -33,11 +34,11 @@ services:
     env_file:
       - .env.production
     environment:
-      # Backend container dùng service name "postgres" thay vì localhost
       DATABASE_URL: postgresql://${POSTGRES_USER:-eedemo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-eedemo_db}?schema=public
       NODE_ENV: production
-    ports:
-      - "${BACKEND_PORT:-3001}:3001"
+    # Không expose port ra host – chỉ truy cập qua nginx (internal network)
+    expose:
+      - "3001"
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,12 +53,33 @@ services:
     env_file:
       - .env.production
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+      # Browser truy cập API qua nginx port 80 → /api
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
       PORT: 3000
-    ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+    # Không expose port ra host – chỉ truy cập qua nginx (internal network)
+    expose:
+      - "3000"
     depends_on:
       - backend
+
+  # ── Nginx – Entry point duy nhất ─────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: eedemo_nginx
+    restart: always
+    ports:
+      # Chỉ nginx expose port ra host
+      - "80:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/nginx-health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   pgdata_prod:
