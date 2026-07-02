@@ -37,6 +37,13 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  /** GET /api/users/students — ADMIN & TEACHER */
+  @Get('students')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async getStudents() {
+    return this.usersService.getStudents();
+  }
+
   /** GET /api/users/:id — ADMIN only */
   @Get(':id')
   @Roles(Role.ADMIN)

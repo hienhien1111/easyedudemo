@@ -88,7 +88,7 @@ export default function ClassesPage() {
   // ─── Auth guard ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (currentUser?.role !== 'ADMIN') {
+    if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'TEACHER')) {
       router.replace('/dashboard');
     }
   }, []);
@@ -99,20 +99,25 @@ export default function ClassesPage() {
     setLoading(true);
     setError('');
     try {
-      const [classRes, teacherRes, centerRes] = await Promise.all([
-        api.get('/classes'),
-        api.get('/classes/teachers'),
-        api.get('/classes/centers'),
-      ]);
-      setClasses(classRes.data.data);
-      setTeachers(teacherRes.data.data);
-      setCenters(centerRes.data.data);
+      if (currentUser?.role === 'ADMIN') {
+        const [classRes, teacherRes, centerRes] = await Promise.all([
+          api.get('/classes'),
+          api.get('/classes/teachers'),
+          api.get('/classes/centers'),
+        ]);
+        setClasses(classRes.data.data);
+        setTeachers(teacherRes.data.data);
+        setCenters(centerRes.data.data);
+      } else {
+        const classRes = await api.get('/classes');
+        setClasses(classRes.data.data);
+      }
     } catch {
       setError('Không thể tải dữ liệu. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     fetchAll();
@@ -302,14 +307,16 @@ export default function ClassesPage() {
             Tạo, chỉnh sửa và gán giáo viên cho từng lớp học
           </p>
         </div>
-        <button
-          id="btn-create-class"
-          type="button"
-          className="btn btn-primary"
-          onClick={openCreate}
-        >
-          + Tạo lớp học
-        </button>
+        {currentUser?.role === 'ADMIN' && (
+          <button
+            id="btn-create-class"
+            type="button"
+            className="btn btn-primary"
+            onClick={openCreate}
+          >
+            + Tạo lớp học
+          </button>
+        )}
       </div>
 
       {/* ─── Alerts ──────────────────────────────────────────────── */}
@@ -436,26 +443,37 @@ export default function ClassesPage() {
                   <td>
                     <div className={styles.actionsCell}>
                       <button
-                        id={`btn-edit-${cls.id}`}
                         type="button"
                         className="btn btn-outline btn-sm"
-                        onClick={() => openEdit(cls)}
+                        onClick={() => router.push(`/dashboard/classes/${cls.id}/students`)}
                       >
-                        Sửa
+                        Quản lý học viên
                       </button>
-                      <button
-                        id={`btn-delete-${cls.id}`}
-                        type="button"
-                        className="btn btn-sm"
-                        style={{
-                          background: '#fef2f2',
-                          color: '#991b1b',
-                          border: '1px solid #fecaca',
-                        }}
-                        onClick={() => openDelete(cls)}
-                      >
-                        Xóa
-                      </button>
+                      {currentUser?.role === 'ADMIN' && (
+                        <>
+                          <button
+                            id={`btn-edit-${cls.id}`}
+                            type="button"
+                            className="btn btn-outline btn-sm"
+                            onClick={() => openEdit(cls)}
+                          >
+                            Sửa
+                          </button>
+                          <button
+                            id={`btn-delete-${cls.id}`}
+                            type="button"
+                            className="btn btn-sm"
+                            style={{
+                              background: '#fef2f2',
+                              color: '#991b1b',
+                              border: '1px solid #fecaca',
+                            }}
+                            onClick={() => openDelete(cls)}
+                          >
+                            Xóa
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

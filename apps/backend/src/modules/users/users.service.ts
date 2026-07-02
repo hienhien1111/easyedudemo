@@ -42,6 +42,19 @@ export class UsersService {
     });
   }
 
+  async getStudents() {
+    return this.prismaService.user.findMany({
+      where: { role: 'STUDENT', isActive: true },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+      },
+      orderBy: { fullName: 'asc' },
+    });
+  }
+
   async findOne(id: string) {
     const user = await this.prismaService.user.findUnique({
       where: { id },
