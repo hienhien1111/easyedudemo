@@ -1,0 +1,268 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ─── Page header ─────────────────────────────────────────────── */
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ─── Stats row ───────────────────────────────────────────────── */
+.statsRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.statChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.893rem;
+  color: var(--color-text-secondary);
+  transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+
+.statChip:hover {
+  border-color: var(--color-primary-300);
+  color: var(--color-primary-600);
+}
+
+.statChipActive {
+  border-color: var(--color-primary-400);
+  background: var(--color-primary-50);
+  color: var(--color-primary-600);
+  font-weight: 500;
+}
+
+.statChipCount {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary-500);
+}
+
+.statChipActive .statChipCount {
+  color: var(--color-primary-600);
+}
+
+.statChipLabel {
+  font-size: 0.857rem;
+}
+
+/* ─── Actions cell ────────────────────────────────────────────── */
+.actionsCell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ─── Teacher pill ────────────────────────────────────────────── */
+.teacherCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.teacherAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-300), var(--color-primary-500));
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.teacherName {
+  font-weight: 500;
+}
+
+.teacherEmail {
+  font-size: 0.786rem;
+  color: var(--color-text-muted);
+}
+
+/* ─── Modal overlay ───────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Modal ───────────────────────────────────────────────────── */
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+  z-index: 1;
+}
+
+.modalTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.modalBody {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-gray-50);
+}
+
+/* ─── Form grid ───────────────────────────────────────────────── */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.formGridFull {
+  grid-column: 1 / -1;
+}
+
+/* ─── Delete confirm modal ────────────────────────────────────── */
+.deleteBody {
+  padding: 24px;
+}
+
+.deleteWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.deleteIcon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.deleteText {
+  font-size: 0.929rem;
+  color: #991b1b;
+  line-height: 1.5;
+}
+
+.deleteTarget {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-top: 8px;
+  font-size: 0.929rem;
+}
+
+/* ─── Loading state ───────────────────────────────────────────── */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 12px;
+}
+
+/* ─── Empty state ─────────────────────────────────────────────── */
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+  font-size: 0.929rem;
+}
+
+/* ─── Select input ────────────────────────────────────────────── */
+.formSelect {
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.929rem;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
+
+.formSelect:focus {
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 3px rgba(91,155,213,0.15);
+}
+
+/* ─── Teacher option in select ────────────────────────────────── */
+.teacherOption {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+/* ─── Price badge ─────────────────────────────────────────────── */
+.priceBadge {
+  font-weight: 600;
+  color: var(--color-primary-600);
+}
