@@ -15,6 +15,7 @@ const NAV_ITEMS = {
   ],
   TEACHER: [
     { href: '/dashboard', label: 'Tổng quan' },
+    { href: '/dashboard/classes', label: 'Lớp học' },
   ],
   STUDENT: [
     { href: '/dashboard', label: 'Tổng quan' },

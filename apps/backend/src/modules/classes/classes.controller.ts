@@ -16,6 +16,7 @@ import { UpdateClassDto } from './dto/update-class.dto';
 import { JwtAccessGuard } from '../../common/guards/jwt-access.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Role } from '@prisma/client';
 
 @Controller('classes')
@@ -25,12 +26,12 @@ export class ClassesController {
 
   /**
    * GET /api/classes
-   * Danh sách tất cả lớp học — ADMIN only
+   * Danh sách lớp học — ADMIN thấy tất cả, TEACHER chỉ thấy lớp mình dạy
    */
   @Get()
-  @Roles(Role.ADMIN)
-  async findAll() {
-    return this.classesService.findAll();
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async findAll(@CurrentUser() user: any) {
+    return this.classesService.findAll(user);
   }
 
   /**
@@ -55,12 +56,12 @@ export class ClassesController {
 
   /**
    * GET /api/classes/:id
-   * Chi tiết một lớp học — ADMIN only
+   * Chi tiết một lớp học — ADMIN hoặc TEACHER (phải là giáo viên của lớp)
    */
   @Get(':id')
-  @Roles(Role.ADMIN)
-  async findOne(@Param('id') id: string) {
-    return this.classesService.findOne(id);
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async findOne(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.classesService.findOne(id, user);
   }
 
   /**
@@ -92,5 +93,44 @@ export class ClassesController {
   @HttpCode(HttpStatus.OK)
   async remove(@Param('id') id: string) {
     return this.classesService.remove(id);
+  }
+
+  /**
+   * GET /api/classes/:id/students
+   * Lấy danh sách học viên của lớp
+   */
+  @Get(':id/students')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async getStudents(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.classesService.getStudents(id, user);
+  }
+
+  /**
+   * POST /api/classes/:id/students
+   * Thêm học viên vào lớp
+   */
+  @Post(':id/students')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async addStudents(
+    @Param('id') id: string,
+    @Body('studentIds') studentIds: string[],
+    @CurrentUser() user: any
+  ) {
+    return this.classesService.addStudents(id, studentIds, user);
+  }
+
+  /**
+   * DELETE /api/classes/:id/students/:studentId
+   * Xóa học viên khỏi lớp
+   */
+  @Delete(':id/students/:studentId')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  @HttpCode(HttpStatus.OK)
+  async removeStudent(
+    @Param('id') id: string,
+    @Param('studentId') studentId: string,
+    @CurrentUser() user: any
+  ) {
+    return this.classesService.removeStudent(id, studentId, user);
   }
 }

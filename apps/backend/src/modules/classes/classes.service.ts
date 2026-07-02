@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateClassDto } from './dto/create-class.dto';
@@ -44,8 +45,10 @@ export class ClassesService {
 
   // ─── List all classes ──────────────────────────────────────────────────────
 
-  async findAll() {
+  async findAll(user?: any) {
+    const where = user?.role === 'TEACHER' ? { teacherId: user.id } : {};
     return this.prisma.class.findMany({
+      where,
       select: CLASS_SELECT,
       orderBy: { createdAt: 'desc' },
     });
@@ -53,13 +56,19 @@ export class ClassesService {
 
   // ─── Find one class ────────────────────────────────────────────────────────
 
-  async findOne(id: string) {
+  async findOne(id: string, user?: any) {
     const cls = await this.prisma.class.findUnique({
       where: { id },
-      select: CLASS_SELECT,
+      select: { ...CLASS_SELECT, teacherId: true },
     });
     if (!cls) throw new NotFoundException('Không tìm thấy lớp học');
-    return cls;
+    
+    if (user?.role === 'TEACHER' && cls.teacherId !== user.id) {
+      throw new ForbiddenException('Bạn không có quyền truy cập lớp học này');
+    }
+    
+    const { teacherId, ...result } = cls;
+    return result;
   }
 
   // ─── Create class ──────────────────────────────────────────────────────────
@@ -184,6 +193,82 @@ export class ClassesService {
 
     await this.prisma.class.delete({ where: { id } });
     return { message: 'Xóa lớp học thành công' };
+  }
+
+  // ─── Manage Enrollments ────────────────────────────────────────────────────
+
+  async getStudents(classId: string, user: any) {
+    const cls = await this.prisma.class.findUnique({ where: { id: classId } });
+    if (!cls) throw new NotFoundException('Không tìm thấy lớp học');
+    if (user.role === 'TEACHER' && cls.teacherId !== user.id) {
+      throw new ForbiddenException('Bạn không có quyền quản lý học viên lớp này');
+    }
+
+    return this.prisma.enrollment.findMany({
+      where: { classId },
+      include: {
+        student: {
+          select: { id: true, fullName: true, email: true, phone: true }
+        }
+      },
+      orderBy: { enrolledAt: 'desc' }
+    });
+  }
+
+  async addStudents(classId: string, studentIds: string[], user: any) {
+    const cls = await this.prisma.class.findUnique({ where: { id: classId } });
+    if (!cls) throw new NotFoundException('Không tìm thấy lớp học');
+    if (user.role === 'TEACHER' && cls.teacherId !== user.id) {
+      throw new ForbiddenException('Bạn không có quyền quản lý học viên lớp này');
+    }
+
+    if (!studentIds || !studentIds.length) {
+      throw new BadRequestException('Danh sách học viên trống');
+    }
+
+    // Verify all students exist and are STUDENT role
+    const students = await this.prisma.user.findMany({
+      where: { id: { in: studentIds }, role: 'STUDENT' }
+    });
+    if (students.length !== studentIds.length) {
+      throw new BadRequestException('Một hoặc nhiều học viên không hợp lệ');
+    }
+
+    const data = studentIds.map(studentId => ({
+      classId,
+      studentId,
+    }));
+
+    // createMany with skipDuplicates will ignore already enrolled students
+    await this.prisma.enrollment.createMany({
+      data,
+      skipDuplicates: true,
+    });
+
+    return { message: 'Đã thêm học viên vào lớp' };
+  }
+
+  async removeStudent(classId: string, studentId: string, user: any) {
+    const cls = await this.prisma.class.findUnique({ where: { id: classId } });
+    if (!cls) throw new NotFoundException('Không tìm thấy lớp học');
+    if (user.role === 'TEACHER' && cls.teacherId !== user.id) {
+      throw new ForbiddenException('Bạn không có quyền quản lý học viên lớp này');
+    }
+
+    const existing = await this.prisma.enrollment.findUnique({
+      where: { studentId_classId: { studentId, classId } }
+    });
+    
+    if (!existing) {
+      throw new NotFoundException('Học viên không nằm trong lớp này');
+    }
+
+    // We do hard delete as per the default decision.
+    await this.prisma.enrollment.delete({
+      where: { studentId_classId: { studentId, classId } }
+    });
+
+    return { message: 'Đã xóa học viên khỏi lớp' };
   }
 
   // ─── List teachers for assignment dropdown ─────────────────────────────────
