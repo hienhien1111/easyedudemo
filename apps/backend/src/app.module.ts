@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ClassesModule } from './modules/classes/classes.module';
+import { ScheduleModule } from './modules/schedule/schedule.module';
 import appConfig from './config/app.config';
 
 @Module({
@@ -17,6 +18,7 @@ import appConfig from './config/app.config';
     AuthModule,
     UsersModule,
     ClassesModule,
+    ScheduleModule,
   ],
 })
 export class AppModule {}
