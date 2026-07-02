@@ -1,0 +1,18 @@
+[
+  {
+    "id": "deploy",
+    "execute-command": "/home/ubuntu/easyedudemo/scripts/deploy.sh",
+    "command-working-directory": "/home/ubuntu/easyedudemo",
+    "response-message": "Deploy triggered successfully",
+    "trigger-rule": {
+      "match": {
+        "type": "payload-hmac-sha256",
+        "secret": "YOUR_WEBHOOK_SECRET_HERE",
+        "parameter": {
+          "source": "header",
+          "name": "X-Webhook-Secret"
+        }
+      }
+    }
+  }
+]

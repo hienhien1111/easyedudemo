@@ -22,7 +22,8 @@ RUN npm run build
 FROM base AS production
 ENV NODE_ENV=production
 COPY package*.json ./
-RUN npm ci --only=production
+# --omit=dev replaces deprecated --only=production (npm v7+)
+RUN npm ci --omit=dev
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public

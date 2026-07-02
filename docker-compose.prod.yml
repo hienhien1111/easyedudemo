@@ -1,0 +1,68 @@
+# docker-compose.prod.yml
+# Dùng cho production deployment trên server
+# Khác với docker-compose.yml (dev):
+#   - Không mount source code volume
+#   - Build production stage của Dockerfile
+#   - Đọc .env.production thay vì .env
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: eedemo_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-eedemo_db}
+      POSTGRES_USER: ${POSTGRES_USER:-eedemo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-eedemo} -d ${POSTGRES_DB:-eedemo_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: eedemo_backend
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      # Backend container dùng service name "postgres" thay vì localhost
+      DATABASE_URL: postgresql://${POSTGRES_USER:-eedemo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-eedemo_db}?schema=public
+      NODE_ENV: production
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: eedemo_frontend
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+      PORT: 3000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata_prod:
+    driver: local
+
+networks:
+  default:
+    name: eedemo_prod_network
