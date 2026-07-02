@@ -11,6 +11,7 @@ const NAV_ITEMS = {
   ADMIN: [
     { href: '/dashboard', label: 'Tổng quan' },
     { href: '/dashboard/users', label: 'Người dùng' },
+    { href: '/dashboard/classes', label: 'Lớp học' },
   ],
   TEACHER: [
     { href: '/dashboard', label: 'Tổng quan' },
