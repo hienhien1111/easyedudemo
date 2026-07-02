@@ -17,7 +17,7 @@ Hướng dẫn thiết lập CI/CD từ A→Z cho môi trường demo
     │  Job 2 (CD): curl POST webhook URL               │
     │                                                  │
     ▼                                                  │
-[ngrok tunnel] ──────────── expose ──────────────────▶ │
+[ngrok tunnel] ──────────── expose ──────────────▶ │
     │                                                  │
     ▼                                                  │
 [Ubuntu VM - port 9000]                               │
@@ -29,16 +29,20 @@ Hướng dẫn thiết lập CI/CD từ A→Z cho môi trường demo
 [deploy.sh]                                           │
     │  git pull origin main                            │
     │  docker compose -f docker-compose.prod.yml       │
-    │    up -d --build                                 │
+    │    build backend frontend                        │
+    │  nginx -s reload                                 │
     │                                                  │
     ▼                                                  │
 [Containers]                                          │
-    ├── postgres:5432                                  │
-    ├── backend:3001 (NestJS + Prisma migrate)         │
-    └── frontend:3000 (Next.js standalone)             │
+    ├── postgres:5432  (internal)                       │
+    ├── backend:3001   (internal – NestJS + Prisma)     │
+    ├── frontend:3000  (internal – Next.js standalone)  │
+    └── nginx:80       (port duy nhất ra ngoài)         │
+    │      /api → backend:3001                         │
+    │      /    → frontend:3000                        │
     │                                                  │
     ▼                                                  │
-[Browser] http://localhost:3000 ◀─────────────────────┘
+[Browser] http://localhost ◄───────────────────────────────
 ```
 
 ---
@@ -163,7 +167,7 @@ git push origin main
 Quan sát:
 - **GitHub** → Actions tab → CI/CD Pipeline workflow chạy
 - **VM** → `tail -f /var/log/eedemo-deploy.log`
-- **Browser** → `http://localhost:3000`
+- **Browser** → `http://localhost` (qua nginx port 80)
 
 ---
 
@@ -175,6 +179,14 @@ cd ~/easyedudemo
 docker compose -f docker-compose.prod.yml ps
 docker compose -f docker-compose.prod.yml logs --tail=50 backend
 docker compose -f docker-compose.prod.yml logs --tail=50 frontend
+docker compose -f docker-compose.prod.yml logs --tail=50 nginx
+
+# Nginx health check
+curl http://localhost/nginx-health
+
+# Test routing qua nginx
+curl http://localhost/api        # → backend (NestJS)
+curl http://localhost            # → frontend (Next.js)
 ```
 
 ### Kiểm tra webhook service
@@ -197,9 +209,12 @@ bash scripts/deploy.sh
 ### Lỗi thường gặp
 
 | Lỗi | Nguyên nhân | Giải pháp |
-|-----|-------------|-----------|
+|-----|-------------|----------|
 | Webhook trả về 403 | Secret không khớp | Kiểm tra `webhook.json` và GitHub secret |
 | `docker: permission denied` | User chưa vào group docker | `sudo usermod -aG docker $USER` rồi logout/login |
 | Frontend không load | `output: 'standalone'` chưa bật | Kiểm tra `next.config.js` |
 | Prisma migrate fail | DB chưa sẵn sàng | Xem logs postgres, kiểm tra `POSTGRES_PASSWORD` |
 | ngrok URL bị thay đổi | Dùng free tier không có static domain | Đăng ký static domain hoặc cập nhật GitHub secret |
+| nginx 502 Bad Gateway | Backend/frontend container chưa sẵn sàng | Chờ containers khởi động xong, xem `docker compose logs` |
+| nginx 404 cho `/api` | NestJS chưa set global prefix `/api` | Kiểm tra `main.ts` có `app.setGlobalPrefix('api')` |
+| `curl http://localhost` không phản hồi | nginx container chưa chạy | `docker compose -f docker-compose.prod.yml up -d nginx` |
