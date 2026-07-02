@@ -29,7 +29,22 @@ log "Pulling latest code from git..."
 git pull origin main
 log "Code updated to: $(git rev-parse --short HEAD)"
 
-# 3. Build lại Docker images (chỉ backend và frontend cần build)
+# 3. Load .env.production để export build args cho Docker
+#    NEXT_PUBLIC_API_URL là build ARG của frontend Dockerfile:
+#    Next.js bake biến NEXT_PUBLIC_* vào JS bundle lúc build → phải có đúng giá trị
+log "Loading .env.production for Docker build args..."
+if [ -f ".env.production" ]; then
+  # Export chỉ các biến NEXT_PUBLIC_ (cần cho frontend build arg)
+  set -a
+  # shellcheck disable=SC1091
+  source .env.production
+  set +a
+  log "NEXT_PUBLIC_API_URL = ${NEXT_PUBLIC_API_URL:-http://localhost/api}"
+else
+  log "WARNING: .env.production not found! Using default NEXT_PUBLIC_API_URL=http://localhost/api"
+fi
+
+# 4. Build lại Docker images (chỉ backend và frontend cần build)
 #    nginx dùng image có sẵn (nginx:alpine), không cần --build
 log "Building Docker images (backend + frontend production stage)..."
 docker compose -f "$COMPOSE_FILE" build --no-cache backend frontend

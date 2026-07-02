@@ -45,6 +45,10 @@ services:
       context: ./apps/frontend
       dockerfile: Dockerfile
       target: development
+      args:
+        # Dev mode: Next.js đọc env var ở runtime (hot reload), nên không bắt buộc.
+        # Nhưng khai báo ở đây để nhất quán với production.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
     container_name: eedemo_frontend
     restart: unless-stopped
     env_file:

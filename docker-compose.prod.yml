@@ -34,9 +34,10 @@ services:
     env_file:
       - .env.production
     environment:
+      # Backend dùng service name "postgres" thay vì localhost (Docker internal DNS)
       DATABASE_URL: postgresql://${POSTGRES_USER:-eedemo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-eedemo_db}?schema=public
       NODE_ENV: production
-    # Không expose port ra host – chỉ truy cập qua nginx (internal network)
+    # expose: chỉ accessible trong Docker network, không ra host
     expose:
       - "3001"
     depends_on:
@@ -48,21 +49,24 @@ services:
       context: ./apps/frontend
       dockerfile: Dockerfile
       target: production
+      args:
+        # NEXT_PUBLIC_API_URL phải được truyền vào lúc BUILD TIME vì Next.js
+        # bake biến NEXT_PUBLIC_* vào JS bundle – không thể thay đổi ở runtime
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
     container_name: eedemo_frontend
     restart: always
     env_file:
       - .env.production
     environment:
-      # Browser truy cập API qua nginx port 80 → /api
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
       PORT: 3000
-    # Không expose port ra host – chỉ truy cập qua nginx (internal network)
+      HOSTNAME: "0.0.0.0"
+    # expose: chỉ accessible trong Docker network, không ra host
     expose:
       - "3000"
     depends_on:
       - backend
 
-  # ── Nginx – Entry point duy nhất ─────────────────────────────
+  # ── Nginx – Entry point duy nhất ra ngoài ────────────────────
   nginx:
     image: nginx:1.27-alpine
     container_name: eedemo_nginx

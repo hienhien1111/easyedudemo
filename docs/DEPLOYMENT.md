@@ -132,6 +132,11 @@ JWT_REFRESH_SECRET=<chuỗi random 64 ký tự khác>
 NEXT_PUBLIC_API_URL=http://<server-ip>/api
 ```
 
+> [!IMPORTANT]
+> **`NEXT_PUBLIC_API_URL` được bake vào JS bundle lúc BUILD TIME** (không phải runtime).
+> - Phải điền đúng IP/domain thật của server trước khi build.
+> - Nếu đổi IP server sau khi đã build → phải **rebuild lại Docker image** (không chỉ restart container).
+
 ### Bước A3 – Lập trình viên commit code lên SVN
 
 ```bash
@@ -234,8 +239,14 @@ JWT_ACCESS_SECRET=<chuỗi random 64 ký tự>
 JWT_REFRESH_SECRET=<chuỗi random 64 ký tự khác>
 
 # API đi qua nginx port 80
+# Thay localhost bằng IP/domain thật nếu truy cập từ máy khác
 NEXT_PUBLIC_API_URL=http://localhost/api
 ```
+
+> [!IMPORTANT]
+> **`NEXT_PUBLIC_API_URL` được bake vào JS bundle lúc BUILD TIME.**
+> `deploy.sh` tự động `source .env.production` trước khi build để truyền giá trị này.
+> Nếu sau đó bạn đổi `NEXT_PUBLIC_API_URL` trong file, phải chạy lại deploy.sh (hoặc rebuild thủ công) — không chỉ restart container.
 
 Tạo chuỗi random:
 ```bash
