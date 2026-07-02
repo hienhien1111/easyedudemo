@@ -67,7 +67,7 @@ const defaultForm = {
 
 export default function ClassesPage() {
   const router = useRouter();
-  const currentUser = getUser();
+  const [currentUser] = useState(() => getUser());
 
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);

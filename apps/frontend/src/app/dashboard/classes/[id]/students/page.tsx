@@ -33,7 +33,7 @@ interface AvailableStudent {
 
 export default function ClassStudentsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const currentUser = getUser();
+  const [currentUser] = useState(() => getUser());
   const classId = params.id;
 
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
