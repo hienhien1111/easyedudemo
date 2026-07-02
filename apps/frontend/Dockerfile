@@ -37,8 +37,6 @@ WORKDIR /app
 COPY --from=builder /app/.next/standalone ./
 # Copy static files (CSS, JS, images)
 COPY --from=builder /app/.next/static ./.next/static
-# Copy public assets (favicon, images, v.v.)
-COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 ENV PORT=3000
