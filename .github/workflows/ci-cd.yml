@@ -18,41 +18,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── Backend (NestJS) ──────────────────────────────────────────
-      - name: Setup Node.js
+      # Setup Node một lần cho cả project (monorepo dùng 1 package-lock.json ở root)
+      - name: Setup Node.js 22 LTS
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
-          cache-dependency-path: apps/backend/package-lock.json
+          # package-lock.json nằm ở root của monorepo, không phải trong workspace con
+          cache-dependency-path: package-lock.json
 
-      - name: Install backend dependencies
-        working-directory: apps/backend
+      # Cài toàn bộ dependencies từ root (npm workspaces)
+      - name: Install all dependencies
         run: npm ci
 
+      # ── Backend (NestJS) ──────────────────────────────────────────
       - name: Generate Prisma Client
         working-directory: apps/backend
         run: npx prisma generate
 
       - name: Build backend (TypeScript compile check)
-        working-directory: apps/backend
-        run: npm run build
+        run: npm run build:backend
 
       # ── Frontend (Next.js) ────────────────────────────────────────
-      - name: Setup Node.js (frontend)
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/frontend/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: apps/frontend
-        run: npm ci
-
       - name: Build frontend (Next.js build check)
-        working-directory: apps/frontend
-        run: npm run build
+        run: npm run build:frontend
         env:
           # Dùng giá trị dummy cho build check – không cần backend thật
           NEXT_PUBLIC_API_URL: http://localhost:3001/api
@@ -79,17 +68,17 @@ jobs:
             --max-time 30)
 
           if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 202 ]; then
-            echo "✅ Deploy webhook triggered successfully (HTTP $RESPONSE)"
+            echo "Deploy webhook triggered successfully (HTTP $RESPONSE)"
           else
-            echo "❌ Webhook failed with HTTP $RESPONSE"
+            echo "Webhook failed with HTTP $RESPONSE"
             exit 1
           fi
 
       - name: Print deployment info
         run: |
-          echo "─────────────────────────────────"
-          echo "📦 Commit: ${{ github.sha }}"
-          echo "👤 Author: ${{ github.actor }}"
-          echo "💬 Message: ${{ github.event.head_commit.message }}"
-          echo "🚀 Deploy triggered at: $(date -u)"
-          echo "─────────────────────────────────"
+          echo "---------------------------------"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          echo "Message: ${{ github.event.head_commit.message }}"
+          echo "Deploy triggered at: $(date -u)"
+          echo "---------------------------------"
