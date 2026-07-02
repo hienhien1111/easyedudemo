@@ -10,7 +10,6 @@ RUN npm install
 COPY . .
 RUN npx prisma generate
 EXPOSE 3001
-# Migrate then start (chạy migrate deploy trước khi start để đồng bộ schema)
 CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:dev"]
 
 # ─── Builder ─────────────────────────────────────────────────────────────────
@@ -25,10 +24,11 @@ RUN npm run build
 FROM base AS production
 ENV NODE_ENV=production
 COPY package*.json ./
-RUN npm ci --only=production
+# --omit=dev replaces deprecated --only=production (npm v7+)
+RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY prisma ./prisma
 EXPOSE 3001
-# Migrate then start — đảm bảo schema DB luôn đồng bộ khi deploy
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
