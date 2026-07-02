@@ -5,8 +5,10 @@ const nextConfig = {
   // Generates .next/standalone so the Dockerfile production stage can copy it
   output: 'standalone',
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+    // API đi qua Nginx (port 80) → /api → backend:3001
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api',
   },
 };
 
 module.exports = nextConfig;
+
