@@ -28,17 +28,19 @@ services:
     env_file:
       - .env
     environment:
+      # Override DATABASE_URL để backend container dùng service name "postgres" thay vì localhost
       DATABASE_URL: postgresql://${POSTGRES_USER:-eedemo}:${POSTGRES_PASSWORD:-eedemo_pass}@postgres:5432/${POSTGRES_DB:-eedemo_db}?schema=public
       NODE_ENV: development
     ports:
       - "${BACKEND_PORT:-3001}:3001"
     volumes:
       - ./apps/backend:/app
+      # Giữ node_modules của container, không bị overwrite bởi host mount
       - /app/node_modules
     depends_on:
       postgres:
         condition: service_healthy
-    command: npm run start:dev
+    # CMD trong Dockerfile đã bao gồm prisma migrate deploy
 
   frontend:
     build:
@@ -50,7 +52,9 @@ services:
     env_file:
       - .env
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      # NEXT_PUBLIC_API_URL phải là địa chỉ mà BROWSER của người dùng có thể truy cập
+      # Khi dev với Docker: browser truy cập qua host port → dùng localhost
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     volumes:
@@ -59,7 +63,6 @@ services:
       - /app/.next
     depends_on:
       - backend
-    command: npm run dev
 
 volumes:
   pgdata:
