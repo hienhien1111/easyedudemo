@@ -12,13 +12,16 @@ const NAV_ITEMS = {
     { href: '/dashboard', label: 'Tổng quan' },
     { href: '/dashboard/users', label: 'Người dùng' },
     { href: '/dashboard/classes', label: 'Lớp học' },
+    { href: '/dashboard/schedule', label: 'Thời khoá biểu' },
   ],
   TEACHER: [
     { href: '/dashboard', label: 'Tổng quan' },
     { href: '/dashboard/classes', label: 'Lớp học' },
+    { href: '/dashboard/schedule', label: 'Thời khoá biểu' },
   ],
   STUDENT: [
     { href: '/dashboard', label: 'Tổng quan' },
+    { href: '/dashboard/schedule', label: 'Thời khoá biểu' },
   ],
 };
 
